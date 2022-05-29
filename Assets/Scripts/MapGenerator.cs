@@ -4,6 +4,13 @@ using UnityEngine;
 
 public class MapGenerator : MonoBehaviour
 {
+    public enum DrawMode
+    {
+        Noise,
+        Colour
+    };
+    public DrawMode drawMode;
+
     public int mapWidth, mapHeight;
     public float noiseScale;
     public bool autoUpdate;
@@ -16,11 +23,43 @@ public class MapGenerator : MonoBehaviour
     public int seed;
     public Vector2 offset;
 
+    public TerrainType[] regions;
+
     public void GenerateMap()
     {
         float[,] noiseMap = Noise.GenerateNoiseMap(mapWidth, mapHeight, seed, noiseScale, octaves, persistance, lacunarity, offset);
+
+        Color[] colourMap = new Color[mapWidth * mapWidth];
+        for (int y = 0; y < mapHeight; y++)
+        {
+            for (int x = 0; x < mapWidth; x++)
+            {
+                float currentHeight = noiseMap[x, y];
+                for (int i = 0; i < regions.Length; i++)
+                {
+                    if (currentHeight <= regions[i].height)
+                    {
+                        // Found the associated region and assign the colour
+                        colourMap[y * mapWidth + x] = regions[i].colour;
+                        break;
+                    }
+                }
+            }
+        }
+        
         MapDisplay display = GetComponent<MapDisplay>();
-        display.DrawNoiseMap(noiseMap);
+        
+        switch(drawMode)
+        {
+            case DrawMode.Noise:
+                Texture2D heightTexture = TextureGenerator.TextureFromHeightMap(noiseMap);
+                display.DrawTexture(heightTexture);
+                break;
+            case DrawMode.Colour:
+                Texture2D colourTexture = TextureGenerator.TextureFromColourMap(colourMap, mapWidth, mapHeight);
+                display.DrawTexture(colourTexture);
+                break;
+        }
     }
 
     private void OnValidate()
