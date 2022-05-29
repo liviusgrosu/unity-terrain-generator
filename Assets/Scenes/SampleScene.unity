@@ -255,15 +255,30 @@ MonoBehaviour:
   octaves: 4
   persistance: 0.489
   lacunarity: 2
-  seed: -72
+  seed: 80
   offset: {x: -8.55, y: -5.48}
   regions:
   - name: Water
     height: 0.4
-    colour: {r: 0.18378428, g: 0.6068192, b: 0.6603774, a: 0}
-  - name: Land
+    colour: {r: 0.0731132, g: 0.4541361, b: 0.5, a: 0}
+  - name: Beach
+    height: 0.45
+    colour: {r: 0.7793938, g: 0.8113208, b: 0.56256676, a: 0}
+  - name: Low Land
+    height: 0.55
+    colour: {r: 0.21244211, g: 0.5849056, b: 0.24995644, a: 0}
+  - name: High Land
+    height: 0.6
+    colour: {r: 0.0990566, g: 0.3962264, b: 0.12898739, a: 0}
+  - name: Low Rocks
+    height: 0.7
+    colour: {r: 0.46226418, g: 0.37984756, b: 0.29436633, a: 0}
+  - name: High Rocks
+    height: 0.9
+    colour: {r: 0.3018868, g: 0.24833798, b: 0.19223924, a: 0}
+  - name: Mountains
     height: 1
-    colour: {r: 0.19090424, g: 0.735849, b: 0.24679601, a: 0}
+    colour: {r: 1, g: 1, b: 1, a: 0}
 --- !u!4 &482834798
 Transform:
   m_ObjectHideFlags: 0
