@@ -7,7 +7,8 @@ public class MapGenerator : MonoBehaviour
     public enum DrawMode
     {
         Noise,
-        Colour
+        Colour,
+        Mesh
     };
     public DrawMode drawMode;
 
@@ -58,6 +59,11 @@ public class MapGenerator : MonoBehaviour
             case DrawMode.Colour:
                 Texture2D colourTexture = TextureGenerator.TextureFromColourMap(colourMap, mapWidth, mapHeight);
                 display.DrawTexture(colourTexture);
+                break;
+            case DrawMode.Mesh:
+                Texture2D meshTexture = TextureGenerator.TextureFromColourMap(colourMap, mapWidth, mapHeight);
+                MeshData meshData = MeshGenerator.GenerateTerrainMesh(noiseMap);
+                display.DrawMesh(meshData, meshTexture);
                 break;
         }
     }
