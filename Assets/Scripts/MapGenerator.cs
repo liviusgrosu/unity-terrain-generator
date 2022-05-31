@@ -11,7 +11,8 @@ public class MapGenerator : MonoBehaviour
     {
         Noise,
         Colour,
-        Mesh
+        Mesh,
+        FalloffMap
     };
     public DrawMode drawMode;
     public Noise.NormalizeMode normalizeMode;
@@ -32,12 +33,19 @@ public class MapGenerator : MonoBehaviour
     public float meshHeightMultiplier;
     public AnimationCurve meshHeightCurve;
 
+    public bool useFalloff;
+    private float[,] falloffMap;
+
     public TerrainType[] regions;
 
     // Collection of actions and its associated parameters to be run
     private Queue<MapThreadInfo<MapData>> mapDataThreadInfoQueue = new Queue<MapThreadInfo<MapData>>();
     private Queue<MapThreadInfo<MeshData>> meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshData>>();
 
+    private void Awake()
+    {
+        falloffMap = FalloffGenerator.GenerateFalloutMap(maxChunkSize);
+    }
 
     public void DrawMapInEditor()
     {
@@ -57,6 +65,9 @@ public class MapGenerator : MonoBehaviour
                 Texture2D meshTexture = TextureGenerator.TextureFromColourMap(mapData.colourMap, maxChunkSize, maxChunkSize);
                 MeshData meshData = MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, editorPreviewLOD);
                 display.DrawMesh(meshData, meshTexture);
+                break;
+            case DrawMode.FalloffMap:
+                display.DrawTexture(TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloutMap(maxChunkSize)));
                 break;
         }
     }
@@ -140,6 +151,11 @@ public class MapGenerator : MonoBehaviour
         {
             for (int x = 0; x < maxChunkSize; x++)
             {
+                if (useFalloff)
+                {
+                    noiseMap[x, y] = Mathf.Clamp01(noiseMap[x, y] - falloffMap[x, y]);
+                }
+
                 float currentHeight = noiseMap[x, y];
                 for (int i = 0; i < regions.Length; i++)
                 {
@@ -170,6 +186,11 @@ public class MapGenerator : MonoBehaviour
         if (octaves < 0)
         {
             octaves = 0;
+        }
+
+        if (falloffMap == null)
+        {
+            falloffMap = FalloffGenerator.GenerateFalloutMap(maxChunkSize);
         }
     }
 }
