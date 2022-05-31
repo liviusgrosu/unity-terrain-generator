@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class MeshGenerator
 {
-    public static MeshData GenerateTerrainMesh(float[,] heightMap, float heightMultiplier, AnimationCurve _heightCurve, int levelOfDetail)
+    public static MeshData GenerateTerrainMesh(float[,] heightMap, float heightMultiplier, AnimationCurve _heightCurve, int editorPreviewLOD)
     {
         // Assigning a new height curve for each mesh data so that other meshs dont access the same curve at the same time
         AnimationCurve heightCurve = new AnimationCurve(_heightCurve.keys);
@@ -14,7 +14,7 @@ public static class MeshGenerator
         float topLeftZ = (height - 1) / 2f;
 
         // Calculate the amount of vertices being reduced depending on the LOD multiplier
-        int meshSimplificationIncrement = levelOfDetail == 0 ? 1 : levelOfDetail * 2;
+        int meshSimplificationIncrement = editorPreviewLOD == 0 ? 1 : editorPreviewLOD * 2;
         int verticesPerLine = (width - 1) / meshSimplificationIncrement + 1;
 
         MeshData meshData = new MeshData(verticesPerLine, verticesPerLine);
