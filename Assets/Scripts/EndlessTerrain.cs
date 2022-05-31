@@ -11,11 +11,14 @@ public class EndlessTerrain : MonoBehaviour
     private int chunkSize;
     private int chunkVisibileInViewDistance;
 
+    private static MapGenerator mapGenerator;
+
     private Dictionary<Vector2, TerrainChunk> terrainChunkDictionary = new Dictionary<Vector2, TerrainChunk>();
     List<TerrainChunk> terrainChunksVisibleLastUpdate = new List<TerrainChunk>();
 
     private void Start()
     {
+        mapGenerator = GetComponent<MapGenerator>();
         // Actual size of the mesh is 1 less then the inputted chunk size
         chunkSize = MapGenerator.maxChunkSize - 1;
         // 300 / 240 = 1
@@ -30,6 +33,7 @@ public class EndlessTerrain : MonoBehaviour
 
     private void UpdateVisibleChunks()
     {
+        // Hide the last updated chunks
         for (int i = 0; i < terrainChunksVisibleLastUpdate.Count; i++)
         {
             terrainChunksVisibleLastUpdate[i].SetVisible(false);
@@ -44,8 +48,10 @@ public class EndlessTerrain : MonoBehaviour
         {
             for (int xOffset = -chunkVisibileInViewDistance; xOffset <= chunkVisibileInViewDistance; xOffset++)
             {
+                // Get the neighbouring chunk coordinate from the viewer
                 Vector2 viewedChunkCoordinate = new Vector2(currentChunkCoordinateX + xOffset, currentChunkCoordinateY + yOffset);
 
+                // If the terrain is already stored then update the terrain
                 if (terrainChunkDictionary.ContainsKey(viewedChunkCoordinate))
                 {
                     terrainChunkDictionary[viewedChunkCoordinate].UpdateTerrainChunk();
@@ -56,6 +62,7 @@ public class EndlessTerrain : MonoBehaviour
                 }
                 else
                 {
+                    // Add the terrain chunk to the dictionary for updates in the future
                     terrainChunkDictionary.Add(viewedChunkCoordinate, new TerrainChunk(viewedChunkCoordinate, chunkSize, transform));
                 }
             }
@@ -81,6 +88,14 @@ public class EndlessTerrain : MonoBehaviour
             meshObject.transform.localScale = Vector3.one * size / 10f;
             meshObject.transform.parent = parent;
             SetVisible(false);
+
+            // Pass the callback to the map generator which will be called upon dequeue from a thread
+            mapGenerator.RequestMapData(OnMapDataRecieved);
+        }
+
+        private void OnMapDataRecieved(MapData mapData)
+        {
+            Debug.Log("Map Data Recieved");
         }
 
         public void UpdateTerrainChunk()

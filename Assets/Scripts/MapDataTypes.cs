@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [System.Serializable]
@@ -40,5 +41,30 @@ public class MeshData
         mesh.uv = uvs;
         mesh.RecalculateNormals();
         return mesh;
+    }
+}
+
+public struct MapData
+{
+    public readonly float[,] heightMap;
+    public readonly Color[] colourMap;
+
+    public MapData(float[,] heightMap, Color[] colourMap)
+    {
+        this.heightMap = heightMap;
+        this.colourMap = colourMap;
+    }
+}
+
+struct MapThreadInfo<T>
+{
+    // Generic such that it can be used for mapData and meshData
+    public readonly Action<T> callback;
+    public readonly T parameter;
+
+    public MapThreadInfo(Action<T> callback, T parameter)
+    {
+        this.callback = callback;
+        this.parameter = parameter;
     }
 }

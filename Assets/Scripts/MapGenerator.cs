@@ -1,6 +1,9 @@
+using System;
+using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+
 
 public class MapGenerator : MonoBehaviour
 {
@@ -30,8 +33,72 @@ public class MapGenerator : MonoBehaviour
 
     public TerrainType[] regions;
 
-    public void GenerateMap()
+    // Collection of actions and its associated parameters to be run
+    private Queue<MapThreadInfo<MapData>> mapDataThreadInfoQueue = new Queue<MapThreadInfo<MapData>>();
+
+    public void DrawMapInEditor()
     {
+        MapData mapData = GenerateMapData();
+        MapDisplay display = GetComponent<MapDisplay>();
+        switch (drawMode)
+        {
+            case DrawMode.Noise:
+                Texture2D heightTexture = TextureGenerator.TextureFromHeightMap(mapData.heightMap);
+                display.DrawTexture(heightTexture);
+                break;
+            case DrawMode.Colour:
+                Texture2D colourTexture = TextureGenerator.TextureFromColourMap(mapData.colourMap, maxChunkSize, maxChunkSize);
+                display.DrawTexture(colourTexture);
+                break;
+            case DrawMode.Mesh:
+                Texture2D meshTexture = TextureGenerator.TextureFromColourMap(mapData.colourMap, maxChunkSize, maxChunkSize);
+                MeshData meshData = MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, levelOfDetail);
+                display.DrawMesh(meshData, meshTexture);
+                break;
+        }
+    }
+
+    public void RequestMapData(Action<MapData> callback)
+    {
+        // Apply the action callback to a different thread
+        ThreadStart threadStart = delegate
+        {
+            MapDataThread(callback);
+        };
+
+        // Start the thread
+        new Thread(threadStart).Start();
+    }
+
+    private void MapDataThread(Action<MapData> callback)
+    {
+        // Any code exectuted here will be on a seperate thread from the main unity one
+        MapData mapData = GenerateMapData();
+        
+        // No other thread can access this block when another thread is already accessing it
+        lock (mapDataThreadInfoQueue)
+        {
+            // Add to the queue the action callback and its parameter
+            mapDataThreadInfoQueue.Enqueue(new MapThreadInfo<MapData>(callback, mapData));
+        }
+    }
+
+    private void Update()
+    {
+        if (mapDataThreadInfoQueue.Count > 0)
+        {
+            for (int i = 0; i < mapDataThreadInfoQueue.Count; i++)
+            {
+                // Pop the next action event and call it
+                MapThreadInfo<MapData> threadInfo = mapDataThreadInfoQueue.Dequeue();
+                threadInfo.callback(threadInfo.parameter);
+            }
+        }
+    }
+
+    MapData GenerateMapData()
+    {
+        // Create the noise map given its parameters
         float[,] noiseMap = Noise.GenerateNoiseMap(maxChunkSize, seed, noiseScale, octaves, persistance, lacunarity, offset);
 
         Color[] colourMap = new Color[maxChunkSize * maxChunkSize];
@@ -51,34 +118,18 @@ public class MapGenerator : MonoBehaviour
                 }
             }
         }
-        
-        MapDisplay display = GetComponent<MapDisplay>();
-        
-        switch(drawMode)
-        {
-            case DrawMode.Noise:
-                Texture2D heightTexture = TextureGenerator.TextureFromHeightMap(noiseMap);
-                display.DrawTexture(heightTexture);
-                break;
-            case DrawMode.Colour:
-                Texture2D colourTexture = TextureGenerator.TextureFromColourMap(colourMap, maxChunkSize, maxChunkSize);
-                display.DrawTexture(colourTexture);
-                break;
-            case DrawMode.Mesh:
-                Texture2D meshTexture = TextureGenerator.TextureFromColourMap(colourMap, maxChunkSize, maxChunkSize);
-                MeshData meshData = MeshGenerator.GenerateTerrainMesh(noiseMap, meshHeightMultiplier, meshHeightCurve, levelOfDetail);
-                display.DrawMesh(meshData, meshTexture);
-                break;
-        }
+        return new MapData(noiseMap, colourMap);
     }
 
     private void OnValidate()
     {
+        // Make sure that lacunarity is not 0
         if (lacunarity < 1)
         {
             lacunarity = 1;
         }
-        
+
+        // Make sure that octaves is not 0
         if (octaves < 0)
         {
             octaves = 0;
