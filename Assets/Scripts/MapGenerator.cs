@@ -40,7 +40,7 @@ public class MapGenerator : MonoBehaviour
 
     public void DrawMapInEditor()
     {
-        MapData mapData = GenerateMapData();
+        MapData mapData = GenerateMapData(Vector2.zero);
         MapDisplay display = GetComponent<MapDisplay>();
         switch (drawMode)
         {
@@ -60,12 +60,12 @@ public class MapGenerator : MonoBehaviour
         }
     }
 
-    public void RequestMapData(Action<MapData> callback)
+    public void RequestMapData(Vector2 centre, Action<MapData> callback)
     {
         // Apply the action callback to a different thread
         ThreadStart threadStart = delegate
         {
-            MapDataThread(callback);
+            MapDataThread(centre, callback);
         };
 
         // Start the thread
@@ -84,10 +84,10 @@ public class MapGenerator : MonoBehaviour
         new Thread(threadStart).Start();
     }
 
-    private void MapDataThread(Action<MapData> callback)
+    private void MapDataThread(Vector2 centre, Action<MapData> callback)
     {
         // Any code exectuted here will be on a seperate thread from the main unity one
-        MapData mapData = GenerateMapData();
+        MapData mapData = GenerateMapData(centre);
         
         // No other thread can access this block when another thread is already accessing it
         lock (mapDataThreadInfoQueue)
@@ -129,10 +129,10 @@ public class MapGenerator : MonoBehaviour
         }
     }
 
-    MapData GenerateMapData()
+    MapData GenerateMapData(Vector2 centre)
     {
         // Create the noise map given its parameters
-        float[,] noiseMap = Noise.GenerateNoiseMap(maxChunkSize, seed, noiseScale, octaves, persistance, lacunarity, offset);
+        float[,] noiseMap = Noise.GenerateNoiseMap(maxChunkSize, seed, noiseScale, octaves, persistance, lacunarity, centre + offset);
 
         Color[] colourMap = new Color[maxChunkSize * maxChunkSize];
         for (int y = 0; y < maxChunkSize; y++)

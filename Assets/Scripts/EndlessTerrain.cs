@@ -124,7 +124,7 @@ public class EndlessTerrain : MonoBehaviour
             }
 
             // Pass the callback to the map generator which will be called upon dequeue from a thread
-            mapGenerator.RequestMapData(OnMapDataRecieved);
+            mapGenerator.RequestMapData(position, OnMapDataRecieved);
         }
 
         private void OnMapDataRecieved(MapData mapData)
