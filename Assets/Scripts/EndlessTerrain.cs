@@ -4,10 +4,14 @@ using UnityEngine;
 
 public class EndlessTerrain : MonoBehaviour
 {
+    private const float viewerMoveThresholdForChunkUpdate = 25f;
+    private const float sqrViewerMoveThresholdForChunkUpdate = viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
+
     public static float maxViewDistance;
     public LODInfo[] detailLevels;
 
     public Transform viewer;
+    private Vector2 viewerPositionOld;
     public Material material;
 
     public static Vector2 viewerPosition;
@@ -28,12 +32,17 @@ public class EndlessTerrain : MonoBehaviour
         chunkSize = MapGenerator.maxChunkSize - 1;
         // 300 / 240 = 1
         chunkVisibileInViewDistance = Mathf.RoundToInt(maxViewDistance / chunkSize);
+        UpdateVisibleChunks();
     }
 
     private void Update()
     {
         viewerPosition = new Vector2(viewer.position.x, viewer.position.z);
-        UpdateVisibleChunks();
+        if ((viewerPositionOld - viewerPosition).sqrMagnitude > sqrViewerMoveThresholdForChunkUpdate)
+        {
+            viewerPositionOld = viewerPosition;
+            UpdateVisibleChunks();
+        }
     }
 
     private void UpdateVisibleChunks()
@@ -111,7 +120,7 @@ public class EndlessTerrain : MonoBehaviour
             lodMeshes = new LODMesh[detailLevels.Length];
             for (int i = 0; i < detailLevels.Length; i++)
             {
-                lodMeshes[i] = new LODMesh(detailLevels[i].lod);
+                lodMeshes[i] = new LODMesh(detailLevels[i].lod, UpdateTerrainChunk);
             }
 
             // Pass the callback to the map generator which will be called upon dequeue from a thread
@@ -122,6 +131,8 @@ public class EndlessTerrain : MonoBehaviour
         {
             this.mapData = mapData;
             mapDataRecieved = true;
+
+            UpdateTerrainChunk();
         }
 
         public void UpdateTerrainChunk()
@@ -191,9 +202,12 @@ public class EndlessTerrain : MonoBehaviour
         public bool hasMesh;
         private int lod;
 
-        public LODMesh(int lod)
+        System.Action updateCallback;
+
+        public LODMesh(int lod, System.Action updateCallback)
         {
             this.lod = lod;
+            this.updateCallback = updateCallback;
         }
 
         public void RequestMesh(MapData mapData)
@@ -206,6 +220,8 @@ public class EndlessTerrain : MonoBehaviour
         {
             mesh = meshData.CreateMesh();
             hasMesh = true;
+
+            updateCallback();
         }
     }
 
