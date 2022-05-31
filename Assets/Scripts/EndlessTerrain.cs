@@ -132,6 +132,9 @@ public class EndlessTerrain : MonoBehaviour
             this.mapData = mapData;
             mapDataRecieved = true;
 
+            Texture2D texture = TextureGenerator.TextureFromColourMap(mapData.colourMap, MapGenerator.maxChunkSize, MapGenerator.maxChunkSize);
+            meshRenderer.material.mainTexture = texture;
+
             UpdateTerrainChunk();
         }
 
