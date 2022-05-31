@@ -6,6 +6,7 @@ public class EndlessTerrain : MonoBehaviour
 {
     public const float maxViewDistance = 450;
     public Transform viewer;
+    public Material material;
 
     public static Vector2 viewerPosition;
     private int chunkSize;
@@ -63,7 +64,7 @@ public class EndlessTerrain : MonoBehaviour
                 else
                 {
                     // Add the terrain chunk to the dictionary for updates in the future
-                    terrainChunkDictionary.Add(viewedChunkCoordinate, new TerrainChunk(viewedChunkCoordinate, chunkSize, transform));
+                    terrainChunkDictionary.Add(viewedChunkCoordinate, new TerrainChunk(viewedChunkCoordinate, chunkSize, transform, material));
                 }
             }
         }
@@ -75,17 +76,25 @@ public class EndlessTerrain : MonoBehaviour
         Vector2 position;
         Bounds bounds;
 
-        public TerrainChunk(Vector2 coordinate, int size, Transform parent)
+        MapData mapData;
+
+        MeshRenderer meshRenderer;
+        MeshFilter meshFilter;
+
+        public TerrainChunk(Vector2 coordinate, int size, Transform parent, Material material)
         {
             position = coordinate * size;
             // Create a bounds to get the distance to edge
             bounds = new Bounds(position, Vector2.one * size);
             Vector3 positionV3 = new Vector3(position.x, 0, position.y);
 
-            meshObject = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            // Create a new object with the appropriate mesh components
+            meshObject = new GameObject("Terrain Chunk");
+            meshRenderer = meshObject.AddComponent<MeshRenderer>();
+            meshFilter = meshObject.AddComponent<MeshFilter>();
+            meshRenderer.material = material;
+
             meshObject.transform.position = positionV3;
-            // Default primitive plane is size 10 so we scale it back by 10
-            meshObject.transform.localScale = Vector3.one * size / 10f;
             meshObject.transform.parent = parent;
             SetVisible(false);
 
@@ -95,7 +104,12 @@ public class EndlessTerrain : MonoBehaviour
 
         private void OnMapDataRecieved(MapData mapData)
         {
-            Debug.Log("Map Data Recieved");
+            mapGenerator.RequestMeshData(mapData, OnMeshDataRecieved);
+        }
+
+        private void OnMeshDataRecieved(MeshData meshData)
+        {
+            meshFilter.mesh = meshData.CreateMesh();
         }
 
         public void UpdateTerrainChunk()

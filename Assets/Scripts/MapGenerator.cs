@@ -35,6 +35,8 @@ public class MapGenerator : MonoBehaviour
 
     // Collection of actions and its associated parameters to be run
     private Queue<MapThreadInfo<MapData>> mapDataThreadInfoQueue = new Queue<MapThreadInfo<MapData>>();
+    private Queue<MapThreadInfo<MeshData>> meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshData>>();
+
 
     public void DrawMapInEditor()
     {
@@ -70,6 +72,18 @@ public class MapGenerator : MonoBehaviour
         new Thread(threadStart).Start();
     }
 
+    public void RequestMeshData(MapData mapData, Action<MeshData> callback)
+    {
+        // Apply the action callback to a different thread
+        ThreadStart threadStart = delegate
+        {
+            MeshDataThread(mapData, callback);
+        };
+
+        // Start the thread
+        new Thread(threadStart).Start();
+    }
+
     private void MapDataThread(Action<MapData> callback)
     {
         // Any code exectuted here will be on a seperate thread from the main unity one
@@ -83,14 +97,33 @@ public class MapGenerator : MonoBehaviour
         }
     }
 
+    private void MeshDataThread(MapData mapData, Action<MeshData> callback)
+    {
+        MeshData meshData = MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, levelOfDetail);
+        lock(meshDataThreadInfoQueue)
+        {
+            meshDataThreadInfoQueue.Enqueue(new MapThreadInfo<MeshData>(callback, meshData));
+        }
+    }
+
     private void Update()
     {
         if (mapDataThreadInfoQueue.Count > 0)
         {
             for (int i = 0; i < mapDataThreadInfoQueue.Count; i++)
             {
-                // Pop the next action event and call it
+                // Pop the next map action event and call it
                 MapThreadInfo<MapData> threadInfo = mapDataThreadInfoQueue.Dequeue();
+                threadInfo.callback(threadInfo.parameter);
+            }
+        }
+
+        if (meshDataThreadInfoQueue.Count > 0)
+        {
+            for (int i = 0; i < meshDataThreadInfoQueue.Count; i++)
+            {
+                // Pop the next mesh action event and call it
+                MapThreadInfo<MeshData> threadInfo = meshDataThreadInfoQueue.Dequeue();
                 threadInfo.callback(threadInfo.parameter);
             }
         }
