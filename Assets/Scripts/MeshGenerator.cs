@@ -10,6 +10,7 @@ public static class MeshGenerator
         AnimationCurve heightCurve = new AnimationCurve(_heightCurve.keys);
         int width = heightMap.GetLength(0);
         int height = heightMap.GetLength(1);
+        // Get the top left corner
         float topLeftX = (width - 1) / -2f;
         float topLeftZ = (height - 1) / 2f;
 
@@ -17,7 +18,7 @@ public static class MeshGenerator
         int meshSimplificationIncrement = editorPreviewLOD == 0 ? 1 : editorPreviewLOD * 2;
         int verticesPerLine = (width - 1) / meshSimplificationIncrement + 1;
 
-        MeshData meshData = new MeshData(verticesPerLine, verticesPerLine);
+        MeshData meshData = new MeshData(verticesPerLine);
         int vertexIndex = 0;
 
         // Jump vertices depending on LOD
@@ -25,13 +26,12 @@ public static class MeshGenerator
         {
             for (int x = 0; x < width; x += meshSimplificationIncrement)
             {
-                // Apply height data
+                // Apply height data starting from the top left corner
                 meshData.vertices[vertexIndex] = new Vector3(topLeftX + x, heightCurve.Evaluate(heightMap[x, y]) * heightMap[x, y] * heightMultiplier, topLeftZ - y);
                 // Percentage of completeness
                 meshData.uvs[vertexIndex] = new Vector2(x / (float)width, y / (float)height);
 
-
-                // Ignore right and bottom edges
+                // Add triangles but ignore right and bottom edges 
                 if (x < width - 1 && y < height - 1)
                 {
                     // Clockwise order

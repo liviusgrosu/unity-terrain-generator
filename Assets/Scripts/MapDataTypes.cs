@@ -9,11 +9,11 @@ public class MeshData
 
     int triangleIndex;
 
-    public MeshData(int meshWidth, int meshHeight)
+    public MeshData(int meshWidthSize)
     {
-        vertices = new Vector3[meshWidth * meshHeight];
-        uvs = new Vector2[meshWidth * meshHeight];
-        triangles = new int[(meshWidth - 1) * (meshHeight - 1) * 6];
+        vertices = new Vector3[meshWidthSize * meshWidthSize];
+        uvs = new Vector2[meshWidthSize * meshWidthSize];
+        triangles = new int[(meshWidthSize - 1) * (meshWidthSize - 1) * 6];
     }
 
     public void AddTriangle(int a, int b, int c)
@@ -27,6 +27,7 @@ public class MeshData
 
     public Mesh CreateMesh()
     {
+        // Create the mesh and assign all necessary parameters for it to be usable
         Mesh mesh = new Mesh();
         mesh.vertices = vertices;
         mesh.triangles = triangles;

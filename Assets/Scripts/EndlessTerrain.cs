@@ -128,9 +128,11 @@ public class EndlessTerrain : MonoBehaviour
 
         private void OnMapDataRecieved(MapData mapData)
         {
+            // Got the map data from thread
             this.mapData = mapData;
             mapDataRecieved = true;
 
+            // Assign texture to mesh
             Texture2D texture = TextureGenerator.TextureFromColourMap(mapData.colourMap, MapGenerator.maxChunkSize, MapGenerator.maxChunkSize);
             meshRenderer.material.mainTexture = texture;
 
@@ -147,11 +149,12 @@ public class EndlessTerrain : MonoBehaviour
 
             // Using a bounds, we get the closest distance from bound box and viewer position
             float viewerDistanceToNearestEdge = Mathf.Sqrt(bounds.SqrDistance(viewerPosition));
-            // Determine if we can draw the chunk
+            // Determine if we can draw the chunk if its close enough to viewer
             bool visible = viewerDistanceToNearestEdge <= maxViewDistance;
 
             if (visible)
             {
+                // Find the LOD the mesh should be be depending on how far it is to the viewer
                 int lodIndex = 0;
                 // No need to look at last index as if it was greater then the visible distance threshold would be equal/greater to max distance
                 for (int i = 0; i < detailLevels.Length - 1; i++)
@@ -166,6 +169,7 @@ public class EndlessTerrain : MonoBehaviour
                     }
                 }
 
+                // Only update the meshs current LOD if its different then before 
                 if (lodIndex != previousLODIndex)
                 {
                     LODMesh lodMesh = lodMeshes[lodIndex];
@@ -216,15 +220,19 @@ public class EndlessTerrain : MonoBehaviour
 
         public void RequestMesh(MapData mapData)
         {
+            // Request mesh data if it hasn't been requested
             hasRequestedMesh = true;
             mapGenerator.RequestMeshData(mapData, lod, OnMeshDataRecieved);
         }
 
         private void OnMeshDataRecieved(MeshData meshData)
         {
+            // Create a usable mesh
             mesh = meshData.CreateMesh();
             hasMesh = true;
 
+            // UpdateTerrainChunk()
+            // This will lead to the meshFilter being assigned
             updateCallback();
         }
     }
