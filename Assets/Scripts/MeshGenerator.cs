@@ -77,6 +77,9 @@ public static class MeshGenerator
                 vertexIndex++;
             }
         }
+        
+        // Calculate normals on a seperate thread
+        meshData.BakeNormals();
 
         // Return meshData type so threading can be applied afterwards
         return meshData;
