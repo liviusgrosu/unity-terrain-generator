@@ -29,7 +29,7 @@ public class EndlessTerrain : MonoBehaviour
         // Max distance is now the last LOD distance threshold
         maxViewDistance = detailLevels[detailLevels.Length - 1].visibleDistanceThreshold;
         // Actual size of the mesh is 1 less then the inputted chunk size
-        chunkSize = MapGenerator.maxChunkSize - 1;
+        chunkSize = mapGenerator.maxChunkSize - 1;
         // 300 / 240 = 1
         chunkVisibileInViewDistance = Mathf.RoundToInt(maxViewDistance / chunkSize);
         UpdateVisibleChunks();
@@ -136,11 +136,6 @@ public class EndlessTerrain : MonoBehaviour
             // Got the map data from thread
             this.mapData = mapData;
             mapDataRecieved = true;
-
-            // Assign texture to mesh
-            Texture2D texture = TextureGenerator.TextureFromColourMap(mapData.colourMap, MapGenerator.maxChunkSize, MapGenerator.maxChunkSize);
-            meshRenderer.material.mainTexture = texture;
-
             UpdateTerrainChunk();
         }
 
