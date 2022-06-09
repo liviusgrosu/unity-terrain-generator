@@ -12,12 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 47785e3a01ba1a148a4efa93b3e0670b, type: 3}
   m_Name: Default Texture
   m_EditorClassIdentifier: 
-  autoUpdate: 0
+  autoUpdate: 1
   baseColours:
+  - {r: 0, g: 1, b: 0.08398175, a: 0}
   - {r: 1, g: 0, b: 0, a: 0}
   - {r: 0, g: 0.30359173, b: 1, a: 0}
-  - {r: 0, g: 1, b: 0.08398175, a: 0}
   baseStartHeights:
   - 0
-  - 0.538
-  - 0.91
+  - 0.147
+  - 0.412
+  baseBlends: []
