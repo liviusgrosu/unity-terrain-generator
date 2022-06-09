@@ -30,6 +30,8 @@ Shader "Custom/Terrain" {
 		sampler2D testTexture;
 		float testScale;
 
+		UNITY_DECLARE_TEX2DARRAY(baseTextures);
+
 		struct Input {
 			float3 worldPos;
 			float3 worldNormal;
@@ -39,20 +41,29 @@ Shader "Custom/Terrain" {
 			return saturate((value-a)/(b-a));
 		}
 
+		float3 triplaner(float3 worldPos, float scale, float3 blendAxis, int textureIndex)
+		{
+			float3 scaledWorldPos = worldPos / scale;
+
+			float3 xProjection = UNITY_SAMPLE_TEX2DARRAY(baseTextures, float3(scaledWorldPos.y, scaledWorldPos.z, textureIndex)) * blendAxis.x;
+			float3 yProjection = UNITY_SAMPLE_TEX2DARRAY(baseTextures, float3(scaledWorldPos.x, scaledWorldPos.z, textureIndex)) * blendAxis.y;
+			float3 zProjection = UNITY_SAMPLE_TEX2DARRAY(baseTextures, float3(scaledWorldPos.x, scaledWorldPos.y, textureIndex)) * blendAxis.z;
+			return xProjection + yProjection + zProjection;
+		}
+
 		void surf (Input IN, inout SurfaceOutputStandard o) {
 			float heightPercent = inverseLerp(minHeight, maxHeight, IN.worldPos.y);
-			for (int i = 0; i < layerCount; i ++) {
-				float drawStrength = inverseLerp(-baseBlends[i]/2 - epsilon, baseBlends[i]/2, heightPercent - baseStartHeights[i]);
-				o.Albedo = o.Albedo * (1-drawStrength) + baseColours[i] * drawStrength;
-			}
-
-			float3 scaledWorldPos = IN.worldPos / testScale;
 			float3 blendAxis = abs(IN.worldNormal);
 			blendAxis /= blendAxis.x + blendAxis.y + blendAxis.z;
-			float3 xProjection = tex2D(testTexture, scaledWorldPos.yz) * blendAxis.x;
-			float3 yProjection = tex2D(testTexture, scaledWorldPos.xz) * blendAxis.y;
-			float3 zProjection = tex2D(testTexture, scaledWorldPos.xy) * blendAxis.z;
-			//o.Albedo = xProjection + yProjection + zProjection;
+
+			for (int i = 0; i < layerCount; i ++) {
+				float drawStrength = inverseLerp(-baseBlends[i]/2 - epsilon, baseBlends[i]/2, heightPercent - baseStartHeights[i]);
+
+				float3 baseColour = baseColours[i] * baseColourStrength[i];
+				float3 textureColour = triplaner(IN.worldPos, baseTextureScales[i], blendAxis, i) * (1 - baseColourStrength[i]);
+
+				o.Albedo = o.Albedo * (1-drawStrength) + (baseColour + textureColour) * drawStrength;
+			}
 		}
 
 		ENDCG
